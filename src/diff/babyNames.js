@@ -19,6 +19,80 @@ Output: John (27), Kris (36)
 
 class BabyNames {
 
+  aggregate(names, synonyms) {
+    const relations = this.buildRelations(synonyms);
+    return this.calculate(names, relations);
+  }
+
+  calculate(names, relations) {
+    const result = {};
+
+    Object.getOwnPropertyNames(names).forEach((name) => {
+      const index = this.findSetForName(name, relations);
+      if (index > -1) {
+        this.addToResult(result, relations[index][0], names[name]);
+      } else {
+        this.addToResult(result, name, names[name]);
+      }
+    });
+
+    return result;
+  }
+
+  addToResult(result, key, count) {
+    if (result[key]) {
+      result[key] += count;
+    } else {
+      result[key] = count;
+    }
+  }
+
+  buildRelations(synonyms) {
+    const relations = [];
+
+    synonyms.forEach((value) => {
+      const firstName = value[0];
+      const secondName = value[1];
+
+      const firstNameIndex = this.findSetForName(firstName, relations);
+      const secondNameIndex = this.findSetForName(secondName, relations);
+
+      if (firstNameIndex === -1 && secondNameIndex === -1) {
+        relations.push(value);
+      } else if (firstNameIndex !== -1 && secondNameIndex !== -1) {
+        if (firstNameIndex !== secondNameIndex) {
+          relations[firstNameIndex] = relations[firstNameIndex].concat(relations[secondNameIndex]);
+          relations.splice(secondNameIndex, 1);
+        }
+      } else {
+        if (firstNameIndex !== -1) {
+          relations[firstNameIndex].push(secondName);
+        } else {
+          relations[secondNameIndex].push(firstName);
+        }
+      }
+
+      console.log('relations: ', relations);
+    });
+
+    return relations;
+  }
+
+  findSetForName(name, relations) {
+    let index = -1;
+    relations.find((set, i) => {
+      index = set.indexOf(name);
+      // console.log(set, index);
+      if (index > -1) {
+        index = i;
+        return true;
+      }
+    });
+
+    return index;
+  }
+
+  /*
   aggregateObject(names, synonyms) {
 
     const relations = this.buildRelations(synonyms);
@@ -57,43 +131,58 @@ class BabyNames {
       }
     });
 
-    console.log('result', result);
+    // console.log('result', result);
     return result;
   }
 
   buildRelations(synonyms) {
-    const relations = {};
+    let relations = {};
 
     synonyms.forEach((value) => {
       const firstName = value[0];
       const secondName = value[1];
-      // console.log(value, firstName, secondName);
 
       const firstNameParent = this.findParentForName(relations, firstName);
       const secondNameParent = this.findParentForName(relations, secondName);
 
-      if (!firstNameParent && !secondNameParent) {
+      console.log(firstName, firstNameParent, secondName, secondNameParent);
+
+      if (firstNameParent === -1 && secondNameParent === -1) {
         relations[firstName] = undefined;
         relations[secondName] = firstName;
-      }
-
-      if (firstNameParent) {
+      } else if (firstNameParent !== -1 && secondNameParent !== -1) {
+        relations[firstName] = secondNameParent;
+        console.log('2', firstName, secondName, firstNameParent, secondNameParent);
+        relations = this.updateParentsForName(relations, firstNameParent, secondNameParent);
+        // console.log('1', relations);
+      } else if (firstNameParent !== -1) {
         relations[secondName] = firstNameParent;
-      }
-
-      if (secondNameParent) {
+      } else if (secondNameParent !== -1) {
         relations[firstName] = secondNameParent;
       }
 
-      // console.log('relations: ', relations);
+      console.log('relations: ', relations);
     });
 
     return relations;
   }
 
+  updateParentsForName(relations, parent, newParent) {
+    const result = Object.assign({}, relations);
+
+    console.log('updateParentsForName', relations, parent, newParent);
+    Object.getOwnPropertyNames(result).forEach((key) => {
+      if (result[key] === parent || key === parent) {
+        result[key] = newParent;
+      }
+    });
+
+    return result;
+  }
+
   findParentForName(relations, name) {
     let currentName = relations[name];
-    let parent = undefined;
+    let parent = relations[name];
 
     while (currentName) {
       parent = currentName;
@@ -103,6 +192,7 @@ class BabyNames {
     // console.log('findParentForName', parent, relations, name);
     return parent;
   }
+  */
 
 }
 
